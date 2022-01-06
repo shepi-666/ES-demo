@@ -11,6 +11,7 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
@@ -88,6 +89,10 @@ public class HotelDocumentTest {
 
     }
 
+    /**
+     * 删除文档
+     * @throws IOException
+     */
     @Test
     public void testDeleteDoc() throws IOException {
         // 1 准备request
@@ -96,5 +101,23 @@ public class HotelDocumentTest {
         // 2 发送请求，得到响应
         client.delete(req, RequestOptions.DEFAULT);
 
+    }
+
+    /**
+     * 更新文档
+     */
+    @Test
+    public void testUpdateDoc() throws IOException {
+        // 1 准备Request
+        UpdateRequest req = new UpdateRequest("hotel", "56977");
+
+        // 2 准备请求参数
+        req.doc(
+                "price", "999",
+                "starName", "四星"
+        );
+
+        // 3 发送请求
+        client.update(req,RequestOptions.DEFAULT);
     }
 }
