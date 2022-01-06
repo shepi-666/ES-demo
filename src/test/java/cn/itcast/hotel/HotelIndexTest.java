@@ -17,7 +17,7 @@ import java.io.IOException;
 
 import static cn.itcast.hotel.constants.HotelConstants.MAPPING_TEMPLATE;
 
-public class HotelIndexText {
+public class HotelIndexTest {
     private RestHighLevelClient client;
 
     @BeforeEach
