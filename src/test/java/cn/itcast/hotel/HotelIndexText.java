@@ -1,6 +1,8 @@
 package cn.itcast.hotel;
 
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -46,5 +48,14 @@ public class HotelIndexText {
 
         // 3.发出请求
         client.indices().create(req, RequestOptions.DEFAULT);
+    }
+
+    @Test
+    public void testDeleteHotelIndex() throws IOException {
+        // 1.创建Request对象
+        DeleteIndexRequest req = new DeleteIndexRequest("hotel");
+
+        // 2.发出请求
+        client.indices().delete(req, RequestOptions.DEFAULT);
     }
 }
