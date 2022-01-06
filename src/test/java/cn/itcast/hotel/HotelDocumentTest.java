@@ -4,8 +4,11 @@ import cn.itcast.hotel.pojo.Hotel;
 import cn.itcast.hotel.pojo.HotelDoc;
 import cn.itcast.hotel.service.IHotelService;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
@@ -57,5 +60,25 @@ public class HotelDocumentTest {
 
         // 3.发送请求
         client.index(req, RequestOptions.DEFAULT);
+    }
+
+    /**
+     * 查询文档
+     */
+    @Test
+    public void testFindById() throws IOException {
+        // 1 准备request
+        GetRequest req = new GetRequest("hotel", "36934");
+
+        // 2 发送请求，得到响应
+        GetResponse resp = client.get(req, RequestOptions.DEFAULT);
+
+        // 3 解析响应结果
+        String json = resp.getSourceAsString();
+
+        // 实现反序列化
+        HotelDoc hotelDoc = JSON.parseObject(json, HotelDoc.class);
+        System.out.println(hotelDoc);
+
     }
 }
