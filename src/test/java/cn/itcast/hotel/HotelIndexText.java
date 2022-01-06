@@ -7,6 +7,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.xcontent.XContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +51,10 @@ public class HotelIndexText {
         client.indices().create(req, RequestOptions.DEFAULT);
     }
 
+    /**
+     * 删除索引库
+     * @throws IOException
+     */
     @Test
     public void testDeleteHotelIndex() throws IOException {
         // 1.创建Request对象
@@ -57,5 +62,21 @@ public class HotelIndexText {
 
         // 2.发出请求
         client.indices().delete(req, RequestOptions.DEFAULT);
+    }
+
+    /**
+     * 判断索引库是否存在
+     * @throws IOException
+     */
+    @Test
+    public void testisExistHotelIndex() throws IOException {
+        // 1.创建Request对象
+        GetIndexRequest req = new GetIndexRequest("hotel");
+
+        // 2.发出请求
+        boolean flag = client.indices().exists(req, RequestOptions.DEFAULT);
+
+        // 3.输出
+        System.err.println(flag ?  "索引库存在" : "索引库不存在");
     }
 }
