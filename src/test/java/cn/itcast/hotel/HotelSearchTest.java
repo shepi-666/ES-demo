@@ -11,6 +11,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -41,22 +42,7 @@ public class HotelSearchTest {
         // 发送请求
         SearchResponse resp = client.search(req, RequestOptions.DEFAULT);
 
-        // 解析结果
-        SearchHits hits = resp.getHits();
-
-        // 查询所有的条数
-        long total = hits.getTotalHits().value;
-
-        // 查询所有的结果
-        SearchHit[] lists = hits.getHits();
-        for (SearchHit hit : lists) {
-            // 得到source
-            String json = hit.getSourceAsString();
-
-            // 将JSON数据反序列化
-            HotelDoc doc = JSON.parseObject(json, HotelDoc.class);
-            System.out.println(doc);
-        }
+        handleResponse(resp);
     }
 
     /**
@@ -77,13 +63,42 @@ public class HotelSearchTest {
         handleResponse(resp);
     }
 
+    /**
+     * 精确查询
+     * @throws IOException
+     */
+    @Test
+    public void testBoolean() throws IOException {
+        // 准备request
+        SearchRequest req = new SearchRequest("hotel");
+
+        // 获取boolQuery对象
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        // 添加term
+        boolQuery.must(QueryBuilders.termQuery("city", "北京"));
+        boolQuery.filter(QueryBuilders.rangeQuery("price").lte(500));
+
+        req.source().query(boolQuery);
+
+
+        // 发送请求
+        SearchResponse resp = client.search(req, RequestOptions.DEFAULT);
+
+        handleResponse(resp);
+    }
+
+
+    /**
+     * 抽取处理查询结果的步骤，ctrl + alt + m
+     * @param resp
+     */
     private void handleResponse(SearchResponse resp) {
         // 解析结果
         SearchHits hits = resp.getHits();
 
         // 查询所有的条数
         long total = hits.getTotalHits().value;
-        System.out.println(total);
+        System.out.println("命中条数：" + total);
 
         // 查询所有的结果
         SearchHit[] lists = hits.getHits();
