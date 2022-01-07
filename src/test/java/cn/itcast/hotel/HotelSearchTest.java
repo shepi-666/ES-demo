@@ -74,6 +74,10 @@ public class HotelSearchTest {
         // 发送请求
         SearchResponse resp = client.search(req, RequestOptions.DEFAULT);
 
+        handleResponse(resp);
+    }
+
+    private void handleResponse(SearchResponse resp) {
         // 解析结果
         SearchHits hits = resp.getHits();
 
