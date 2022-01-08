@@ -15,11 +15,12 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
@@ -40,10 +41,10 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
             // 1 准备request
             SearchRequest req = new SearchRequest("hotel");
 
-            BoolQueryBuilder boolQuery = getBoolQuery(params);
+            QueryBuilder qb = getQueryBuilder(params);
 
 
-            req.source().query(boolQuery);
+            req.source().query(qb);
             // 2.2 分页
             Integer page = params.getPage();
             Integer size = params.getSize();
@@ -69,11 +70,11 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
     }
 
     /**
-     * 获取boolQuery的方法
+     * 获取queryBuilder的方法
      * @param params
      * @return
      */
-    private BoolQueryBuilder getBoolQuery(RequestParams params) {
+    private QueryBuilder getQueryBuilder(RequestParams params) {
         // 2 准备dsl
         // 2.1 query
         // 构建booleanquery
@@ -111,7 +112,21 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
             boolQuery.filter(QueryBuilders.rangeQuery("price")
                     .gte(params.getMinPrice()).lte(params.getMaxPrice()));
         }
-        return boolQuery;
+
+        // 算分查询
+        FunctionScoreQueryBuilder fsqb = QueryBuilders.functionScoreQuery(
+                boolQuery, // 原始查询，相关性算分的查询
+                        new FunctionScoreQueryBuilder.FilterFunctionBuilder[]{
+                                // 一个functionScore元素
+                                new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+                                        QueryBuilders.termQuery("isAd", true),
+                                        // 算分函数
+                                        ScoreFunctionBuilders.weightFactorFunction(10)
+                                )
+                        });
+
+
+        return fsqb;
     }
 
     /**

@@ -111,12 +111,11 @@ public class HotelDocumentTest {
     @Test
     public void testUpdateDoc() throws IOException {
         // 1 准备Request
-        UpdateRequest req = new UpdateRequest("hotel", "56977");
+        UpdateRequest req = new UpdateRequest("hotel", "60487");
 
         // 2 准备请求参数
         req.doc(
-                "price", "999",
-                "starName", "四星"
+                "isAd", true
         );
 
         // 3 发送请求
