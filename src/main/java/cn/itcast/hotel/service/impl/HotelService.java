@@ -21,6 +21,10 @@ import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
@@ -28,7 +32,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHotelService {
@@ -67,6 +73,78 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public Map<String, List<String>> filters(RequestParams params) {
+        // 首先确定我们需要聚合的关键词
+        List<String> keywords = new ArrayList<>();
+        keywords.add("city");
+        keywords.add("brand");
+        keywords.add("starName");
+
+        // 首先获取req
+        SearchRequest req = new SearchRequest("hotel");
+        SearchSourceBuilder builder = req.source();
+        // 聚合查询信息
+        QueryBuilder queryBuilder = getQueryBuilder(params);
+        builder.query(queryBuilder);
+
+        Map<String, List<String>> res = new HashMap<>();
+        for (String keyword : keywords) {
+            getAggregation(keyword, builder);
+        }
+
+        // 发送请求
+        try {
+            SearchResponse resp = client.search(req, RequestOptions.DEFAULT);
+            // 对结果集进行处理
+            getResult(resp, keywords, res);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    private SearchSourceBuilder getAggregation(String keyword, SearchSourceBuilder builder) {
+        // 2 准备DSL
+        // 2.1 设置size
+        builder.size(0);
+        // 2.2 聚合
+        builder.aggregation(AggregationBuilders
+                .terms(keyword + "Agg")
+                .field(keyword)
+                .size(100) // 显示的个数
+        );
+        return builder;
+    }
+
+    /**
+     * 聚合结果解析
+     */
+    public void getResult(SearchResponse resp, List<String> keywords, Map<String, List<String>> res) {
+        // 解析聚合结果
+        Aggregations aggregations = resp.getAggregations();
+
+        for (String keyword : keywords) {
+            // 根据聚合名称获取聚合结果
+            Terms brandTerms = aggregations.get(keyword + "Agg");
+
+            // 获取桶子
+            List<? extends Terms.Bucket> buckets = brandTerms.getBuckets();
+
+            List<String> temp = new ArrayList<>();
+            // 遍历桶子
+            for (Terms.Bucket bucket : buckets) {
+                String terms = bucket.getKeyAsString();
+                temp.add(terms);
+            }
+
+            res.put(keyword, temp);
+        }
+
+
     }
 
     /**

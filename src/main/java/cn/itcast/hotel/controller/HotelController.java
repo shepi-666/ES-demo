@@ -7,6 +7,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/hotel")
@@ -19,6 +21,12 @@ public class HotelController {
     @PostMapping("/list")
     public PageResult search(@RequestBody RequestParams params) {
         return hotelService.search(params);
+    }
+
+    @ResponseBody
+    @PostMapping("/filters")
+    public Map<String, List<String>> getAgg(@RequestBody RequestParams params) {
+        return hotelService.filters(params);
     }
 
 }
