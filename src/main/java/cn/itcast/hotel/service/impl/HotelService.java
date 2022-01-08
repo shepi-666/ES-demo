@@ -8,6 +8,8 @@ import cn.itcast.hotel.pojo.RequestParams;
 import cn.itcast.hotel.service.IHotelService;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -31,6 +33,7 @@ import org.elasticsearch.search.suggest.Suggest;
 import org.elasticsearch.search.suggest.SuggestBuilder;
 import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
+import org.elasticsearch.xcontent.XContentType;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -143,6 +146,32 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
         }
         return res;
 
+    }
+
+    @Override
+    public void insert(Hotel hotel) {
+        try {
+            HotelDoc hotelDoc = new HotelDoc(hotel);
+
+            // req对象
+            IndexRequest req = new IndexRequest("hotel").id(hotel.getId().toString());
+            // 准备json文档
+            req.source(JSON.toJSONString(hotelDoc), XContentType.JSON);
+            // 发送请求
+            client.index(req, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        try {
+            DeleteRequest req = new DeleteRequest("hotel", id.toString());
+            client.delete(req, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private SearchSourceBuilder getAggregation(String keyword, SearchSourceBuilder builder) {

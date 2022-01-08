@@ -19,6 +19,12 @@
     </properties>
     <dependencies>
 
+        <!--引入amqp的依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
         <!--引入elasticsearch的依赖-->
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
