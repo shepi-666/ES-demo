@@ -12,11 +12,15 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.geo.GeoPoint;
+import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +48,16 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
             Integer page = params.getPage();
             Integer size = params.getSize();
             req.source().from((page - 1) * size).size(size);
+
+            // 2.3 添加排序功能
+            String location = params.getLocation();
+            if (location != null && !"".equals(location)) {
+                req.source().sort(SortBuilders
+                        .geoDistanceSort("location", new GeoPoint(location))
+                        .order(SortOrder.ASC)
+                        .unit(DistanceUnit.KILOMETERS)
+                );
+            }
 
             // 3 发送请求
             SearchResponse resp = client.search(req, RequestOptions.DEFAULT);
@@ -120,6 +134,13 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 
             // 将JSON数据反序列化
             HotelDoc doc = JSON.parseObject(json, HotelDoc.class);
+
+            // 获取排序值
+            Object[] values = hit.getSortValues();
+            if (values.length > 0) {
+                Object value = values[0];
+                doc.setDistance(value);
+            }
             hotels.add(doc);
         }
         return new PageResult(total, hotels);
