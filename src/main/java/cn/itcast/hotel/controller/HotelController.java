@@ -29,4 +29,10 @@ public class HotelController {
         return hotelService.filters(params);
     }
 
+    @ResponseBody
+    @GetMapping("/suggestion")
+    public List<String> getSuggestion(@RequestParam("key") String prefix) {
+        return hotelService.getSuggestions(prefix);
+    }
+
 }

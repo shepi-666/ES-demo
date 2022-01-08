@@ -3,6 +3,8 @@ package cn.itcast.hotel.pojo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.*;
+
 @Data
 @NoArgsConstructor
 public class HotelDoc {
@@ -18,6 +20,7 @@ public class HotelDoc {
     private String location;
     private String pic;
     private Boolean isAd;
+    private List<String> suggestion; // 这里面装的都是keyword
 
     private Object distance;
 
@@ -33,5 +36,17 @@ public class HotelDoc {
         this.business = hotel.getBusiness();
         this.location = hotel.getLatitude() + ", " + hotel.getLongitude();
         this.pic = hotel.getPic();
+        if (this.business.contains("/") || this.business.contains("、")) {
+            // 对应多个商圈，需要进行切割
+            String s = this.business.replace('、', '/');
+            String[] arr = s.split("/");
+            // 添加元素
+            this.suggestion = new ArrayList<>();
+            this.suggestion.add(this.brand);
+            Collections.addAll(this.suggestion, arr);
+        } else {
+            this.suggestion = Arrays.asList(this.brand, this.business);
+        }
+
     }
 }

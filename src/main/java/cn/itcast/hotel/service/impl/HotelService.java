@@ -27,6 +27,10 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -105,6 +109,40 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
             e.printStackTrace();
         }
         return res;
+    }
+
+    @Override
+    public List<String> getSuggestions(String prefix) {
+
+        List<String> res = new ArrayList<>();
+        SearchRequest req = new SearchRequest("hotel");
+        req.source().suggest(new SuggestBuilder().addSuggestion(
+                "suggestions",
+                SuggestBuilders.completionSuggestion("suggestion")
+                        .prefix(prefix)
+                        .skipDuplicates(true)
+                        .size(10)
+        ));
+
+        try {
+            SearchResponse resp = client.search(req, RequestOptions.DEFAULT);
+
+
+            Suggest suggest = resp.getSuggest();
+            // 根据补全查询名称获取补全结果
+            CompletionSuggestion suggestions = suggest.getSuggestion("suggestions");
+            // 获取options
+            List<CompletionSuggestion.Entry.Option> options = suggestions.getOptions();
+            // 遍历
+            for (CompletionSuggestion.Entry.Option option : options) {
+                String text = option.getText().toString();
+                res.add(text);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return res;
+
     }
 
     private SearchSourceBuilder getAggregation(String keyword, SearchSourceBuilder builder) {
