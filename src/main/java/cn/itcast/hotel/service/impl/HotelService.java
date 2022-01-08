@@ -12,6 +12,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -35,16 +36,10 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
             // 1 准备request
             SearchRequest req = new SearchRequest("hotel");
 
-            // 2 准备dsl
-            // 2.1 关键字搜索
-            String key = params.getKey();
-            // 健壮性的判断
-            if (key == null || "".equals(key)) {
-                req.source().query(QueryBuilders.matchAllQuery());
-            } else {
-                req.source().query(QueryBuilders.matchQuery("condition", key));
-            }
+            BoolQueryBuilder boolQuery = getBoolQuery(params);
 
+
+            req.source().query(boolQuery);
             // 2.2 分页
             Integer page = params.getPage();
             Integer size = params.getSize();
@@ -57,6 +52,52 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * 获取boolQuery的方法
+     * @param params
+     * @return
+     */
+    private BoolQueryBuilder getBoolQuery(RequestParams params) {
+        // 2 准备dsl
+        // 2.1 query
+        // 构建booleanquery
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+
+        // must：关键字搜索
+        String key = params.getKey();
+        // 健壮性的判断
+        if (key == null || "".equals(key)) {
+            boolQuery.must(QueryBuilders.matchAllQuery());
+        } else {
+            boolQuery.must(QueryBuilders.matchQuery("condition", key));
+        }
+        // 条件过滤
+        // 城市条件
+        if (params.getCity() != null &&  !"".equals(params.getCity())) {
+            // 将查询条件放在filter中防止算分
+            boolQuery.filter(QueryBuilders.termQuery("city", params.getCity()));
+        }
+
+        // 品牌条件
+        if (params.getBrand() != null &&  !"".equals(params.getBrand())) {
+            // 将查询条件放在filter中防止算分
+            boolQuery.filter(QueryBuilders.termQuery("brand", params.getBrand()));
+        }
+
+        // 星级查询
+        if (params.getStarName() != null &&  !"".equals(params.getStarName())) {
+            // 将查询条件放在filter中防止算分
+            boolQuery.filter(QueryBuilders.termQuery("starName", params.getStarName()));
+        }
+
+        // 价格
+        if (params.getMinPrice() != null && params.getMaxPrice() != null) {
+            boolQuery.filter(QueryBuilders.rangeQuery("price")
+                    .gte(params.getMinPrice()).lte(params.getMaxPrice()));
+        }
+        return boolQuery;
     }
 
     /**
